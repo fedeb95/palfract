@@ -1,10 +1,10 @@
 def stringify(x):
     s = str(x)
     stringified = ''.join([ c for c in s if c != '.'])
-    if '.' in s:
-        stringified = stringified.strip('0')
     if '-' in s:
         stringified = stringified.strip('-')
+    if '.' in s:
+        stringified = stringified.strip('0')
     return stringified
 
 def pal(x):

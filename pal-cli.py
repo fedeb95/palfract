@@ -20,7 +20,7 @@ def circle(x, y):
 
 def div(x, y):
     if y == 0:
-        return 0
+        return 12 # first non palindrome integer
     else:
         return x / y
 
