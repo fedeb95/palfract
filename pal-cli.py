@@ -1,7 +1,7 @@
 import numpy
 import sys
 from time import time
-from math import sqrt, cos
+from math import sqrt, cos, log
 import argparse
 
 from pal import stringify, pal_str
@@ -23,6 +23,15 @@ def div(x, y):
         return 12 # first non palindrome integer
     else:
         return x / y
+
+def div2(x, y):
+    if y <= 1:
+        return 12 # first non palindrome integer
+    else:
+        return x**2 / y**2
+
+def cube(x, y):
+    return x**3 + y**3
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate fractals of palindrome numbers", formatter_class=argparse.RawTextHelpFormatter)
@@ -74,6 +83,10 @@ if __name__ == "__main__":
                 z = circle(x, y)
             elif args.function == 'div':
                 z = div(x, y)
+            elif args.function == 'div2':
+                z = div2(x, y)
+            elif args.function == 'cube':
+                z = cube(x, y)
             else:
                 raise ValueError
 
