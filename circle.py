@@ -4,6 +4,8 @@ from time import time
 from math import sqrt, cos, log
 import argparse
 
+DELTA = 0.00001
+
 
 def write_pgm(data, fname):
   f = open(fname, "wb")
@@ -13,11 +15,6 @@ def write_pgm(data, fname):
   data = numpy.array(data, dtype='int16')
   f.write(data.tobytes())
   f.close()
-
-def is_on_circle(x, y, n, c, scale):
-    if n < 0:
-        return True
-    return is_on_circle(x-(c/scale), y-(c/scale**n), n-1, c, scale**n)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate fractals of palindrome numbers", formatter_class=argparse.RawTextHelpFormatter)
@@ -54,14 +51,14 @@ if __name__ == "__main__":
     parser.add_argument('-start',
                         '--start',
                         help="start",
-                        type=int,
-                        default=-1,
+                        type=float,
+                        default=-0.1,
                         dest="start")
     parser.add_argument('-end',
                         '--end',
                         help="end",
-                        type=int,
-                        default=1,
+                        type=float,
+                        default=0.1,
                         dest="end")
 
 
@@ -81,16 +78,27 @@ if __name__ == "__main__":
     minw = int(-width/2)
     maxw = int(width/2)
     
+    centers = [(0,0)]
+    for i in range(0, args.n):
+        tmp_centers = []
+        for c in centers:
+            for h in range(minh, maxh):
+                for w in range(minw, maxw):
+                    x = numpy.interp(w, [minw, maxw], [args.start, args.end]) 
+                    y = numpy.interp(h, [minh, maxh], [args.start, args.end]) 
+                    if abs((x-c[0])**2 + (y-c[1])**2 - args.c/scale) < DELTA:
+                        tmp_centers.append((x, y))
+            centers = tmp_centers
+
     for h in range(minh, maxh):
         for w in range(minw, maxw):
             x = numpy.interp(w, [minw, maxw], [args.start, args.end]) 
             y = numpy.interp(h, [minh, maxh], [args.start, args.end]) 
-            if is_on_circle(x, y, args.n, args.c, args.scale):
-                data.append(1)
-                max_count += 1
-            else:
-                data.append(0)
-
+            for c in centers:
+                if abs(c[0]-x) < DELTA and abs(c[1]-y) < DELTA:
+                    data.append(1);
+                else:
+                    data.append(0);
     newdata = []
     for n in data:
         if n > 0:
