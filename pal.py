@@ -4,7 +4,7 @@ def stringify(x):
     if '-' in s:
         stringified = stringified.strip('-')
     if '.' in s:
-        stringified = stringified.strip('0')
+        stringified = stringified[:-1]
     return stringified
 
 def pal(x):

@@ -25,7 +25,7 @@ def div(x, y):
         return x / y
 
 def div2(x, y):
-    if y <= 1:
+    if y == 0:
         return 12 # first non palindrome integer
     else:
         return x**2 / y**2
