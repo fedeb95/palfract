@@ -4,24 +4,27 @@ from time import time
 from math import sqrt, cos, log
 import argparse
 
-DELTA = 0.00001
+DELTA = 0.01
 
 
 def write_pgm(data, fname):
-  f = open(fname, "wb")
-  f.write("P5\r\n".encode('charmap'))
-  f.write(f"{width} {height}\r\n".encode('charmap'))
-  f.write("65535\r\n".encode('charmap'))
-  data = numpy.array(data, dtype='int16')
-  f.write(data.tobytes())
-  f.close()
+    f = open(fname, "wb")
+    f.write("P5\r\n".encode('charmap'))
+    f.write(f"{width} {height}\r\n".encode('charmap'))
+    f.write("65535\r\n".encode('charmap'))
+    data = numpy.array(data, dtype='int16')
+    f.write(data.tobytes())
+    f.close()
+
+def interp(old_value, old_min, old_max, new_min, new_max):
+    return ( (old_value - old_min) / (old_max - old_min) ) * (new_max - new_min) + new_min
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate fractals of palindrome numbers", formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-n',
                         '--n',
                         type=int,
-                        default="3",
+                        default="1",
                         dest="n",
                         help='n')
     parser.add_argument('-wh',
@@ -52,13 +55,13 @@ if __name__ == "__main__":
                         '--start',
                         help="start",
                         type=float,
-                        default=-0.1,
+                        default=-1,
                         dest="start")
     parser.add_argument('-end',
                         '--end',
                         help="end",
                         type=float,
-                        default=0.1,
+                        default=1,
                         dest="end")
 
 
@@ -68,9 +71,6 @@ if __name__ == "__main__":
     scale = args.scale
 
     t = time()
-    max_count = 0
-    max_x = 0
-    min_x = 0
 
     data = []
     minh = int(-height/2)
@@ -78,38 +78,46 @@ if __name__ == "__main__":
     minw = int(-width/2)
     maxw = int(width/2)
     
-    centers = [(0,0)]
-    for i in range(0, args.n):
-        tmp_centers = []
+    centers = {(0,0): 1}
+
+    n = args.n
+    for i in range(0, n):
+        tmp_centers = {}
         for c in centers:
-            for h in range(minh, maxh):
-                for w in range(minw, maxw):
-                    x = numpy.interp(w, [minw, maxw], [args.start, args.end]) 
-                    y = numpy.interp(h, [minh, maxh], [args.start, args.end]) 
-                    if abs((x-c[0])**2 + (y-c[1])**2 - args.c/scale) < DELTA:
-                        tmp_centers.append((x, y))
-            centers = tmp_centers
+            minx = c[0] + (-args.c/scale**i)
+            maxx = c[0] + (args.c/scale**i)
+            miny = c[1] + (-args.c/scale**i)
+            maxy = c[1] + (args.c/scale**i)
+            for x in numpy.linspace(minx-1, maxx+1, 100):
+                for y in numpy.linspace(miny-1, maxy+1, 100):
+                    #print(f'{x} {y}')
+                    #print(abs((x-c[0])**2 + (y-c[1])**2 - args.c/scale**i))
+                    if (x-c[0])**2 + (y-c[1])**2 - ((args.c/scale**i)/2)**2 < DELTA:
+                        tmp_centers[(x, y)] = 1
+        centers = tmp_centers
+
+    #print(centers)
+
+    newcenters = {}
+    for c in centers:
+        newcenters[(int(interp(c[0], -args.c, args.c, minw, maxw)), int(interp(c[1], -args.c, args.c, minh, maxh)))] = 1 
+    centers = newcenters
 
     for h in range(minh, maxh):
         for w in range(minw, maxw):
-            x = numpy.interp(w, [minw, maxw], [args.start, args.end]) 
-            y = numpy.interp(h, [minh, maxh], [args.start, args.end]) 
-            for c in centers:
-                if abs(c[0]-x) < DELTA and abs(c[1]-y) < DELTA:
-                    data.append(1);
-                else:
-                    data.append(0);
+            if (w, h) in centers:
+                data.append(centers[(w, h)])
+            else:
+                data.append(0)
+
     newdata = []
     for n in data:
         if n > 0:
-            newdata.append(n + (65535 - max_count))
+            newdata.append(n + (65535 - 1))
         else:
             newdata.append(0)
 
     data = newdata 
 
-    write_pgm(data, f"circle_{scale}_{width}_{height}.pgm")
+    write_pgm(data, f"circle_{args.n}_{scale}_{width}_{height}.pgm")
     sys.stderr.write("elapsed time: %.1f seconds\r\n" % (time()-t))
-    sys.stderr.write("largest count: %d\r\n" % max_count)
-    sys.stderr.write("max x : %d\r\n" % max_x)
-    sys.stderr.write("min x : %d\r\n" % min_x)
